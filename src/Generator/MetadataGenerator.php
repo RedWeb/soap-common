@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace GoetasWebservices\SoapServices\Metadata\Generator;
 
-use Doctrine\Common\Inflector\Inflector;
+use Doctrine\Inflector\InflectorFactory;
 use GoetasWebservices\XML\SOAPReader\Soap\Operation;
 use GoetasWebservices\XML\SOAPReader\Soap\OperationMessage;
 use GoetasWebservices\XML\SOAPReader\Soap\Service;
@@ -107,12 +107,13 @@ class MetadataGenerator implements MetadataGeneratorInterface
 
     protected function generateOperation(Operation $soapOperation, Service $service): array
     {
+        $inflector = InflectorFactory::create()->build();
         return [
             'action' => $soapOperation->getAction(),
             'style' => $soapOperation->getStyle(),
             'version' => $service->getVersion(),
             'name' => $soapOperation->getOperation()->getName(),
-            'method' => Inflector::camelize($soapOperation->getOperation()->getName()),
+            'method' => $inflector->camelize($soapOperation->getOperation()->getName()),
             'input' => $this->generateInOut($soapOperation, $soapOperation->getInput(), $soapOperation->getOperation()->getPortTypeOperation()->getInput(), 'Input', $service),
             'output' => $this->generateInOut($soapOperation, $soapOperation->getOutput(), $soapOperation->getOperation()->getPortTypeOperation()->getOutput(), 'Output', $service),
             'fault' => [],
@@ -126,19 +127,20 @@ class MetadataGenerator implements MetadataGeneratorInterface
             throw new \Exception(sprintf("Can not find a PHP namespace to be associated with '%s' XML namespace", $xmlNs));
         }
 
+        $inflector = InflectorFactory::create()->build();
         $ns = $this->namespaces[$xmlNs];
         $operation = [
             'message_fqcn' => $ns
                 . $this->baseNs[$service->getVersion()]['messages'] . '\\'
-                . Inflector::classify($operationMessage->getMessage()->getOperation()->getName())
+                . $inflector->classify($operationMessage->getMessage()->getOperation()->getName())
                 . $direction,
             'headers_fqcn' => $ns
                 . $this->baseNs[$service->getVersion()]['headers'] . '\\'
-                . Inflector::classify($operationMessage->getMessage()->getOperation()->getName())
+                . $inflector->classify($operationMessage->getMessage()->getOperation()->getName())
                 . $direction,
             'part_fqcn' => $ns
                 . $this->baseNs[$service->getVersion()]['parts'] . '\\'
-                . Inflector::classify($operationMessage->getMessage()->getOperation()->getName())
+                . $inflector->classify($operationMessage->getMessage()->getOperation()->getName())
                 . $direction,
             'parts' => $this->getParts($param->getMessage()->getParts()),
         ];
